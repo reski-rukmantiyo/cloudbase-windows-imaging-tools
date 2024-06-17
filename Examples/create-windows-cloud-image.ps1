@@ -31,16 +31,16 @@ try {
 }
 
 # The Windows image file path that will be generated
-$virtualDiskPath = "C:\images\my-windows-image.raw"
+$virtualDiskPath = "E:\images\my-windows-image.raw"
 
 # The wim file path is the installation image on the Windows ISO
 $wimFilePath = "D:\Sources\install.wim"
 
 # VirtIO ISO contains all the synthetic drivers for the KVM hypervisor
-$virtIOISOPath = "C:\images\virtio.iso"
+$virtIOISOPath = "E:\images\virtio.iso"
 # Note(avladu): Do not use stable 0.1.126 version because of this bug https://github.com/crobinso/virtio-win-pkg-scripts/issues/10
 # Note (atira): Here https://fedorapeople.org/groups/virt/virtio-win/CHANGELOG you can see the changelog for the VirtIO drivers
-$virtIODownloadLink = "https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.217-2/virtio-win-0.1.217.iso"
+$virtIODownloadLink = "https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.240-1/virtio-win-0.1.240.iso"
 
 # Download the VirtIO drivers ISO from Fedora
 (New-Object System.Net.WebClient).DownloadFile($virtIODownloadLink, $virtIOISOPath)
@@ -48,27 +48,42 @@ $virtIODownloadLink = "https://fedorapeople.org/groups/virt/virtio-win/direct-do
 # Extra drivers path contains the drivers for the baremetal nodes
 # Examples: Chelsio NIC Drivers, Mellanox NIC drivers, LSI SAS drivers, etc.
 # The cmdlet will recursively install all the drivers from the folder and subfolders
-$extraDriversPath = "C:\drivers\"
+$extraDriversPath = "c:\drivers\"
 
 # Every Windows ISO can contain multiple Windows flavors like Core, Standard, Datacenter
 # Usually, the second image version is the Standard one
 $image = (Get-WimFileImagesInfo -WimFilePath $wimFilePath)[1]
 
 # The path were you want to create the config fille
-$configFilePath = Join-Path $scriptPath "Examples\config.ini"
+$configFilePath = Join-Path $scriptPath "config.ini"
 New-WindowsImageConfig -ConfigFilePath $configFilePath
 
 #This is an example how to automate the image configuration file according to your needs
 Set-IniFileValue -Path $configFilePath -Section "Default" -Key "wim_file_path" -Value $wimFilePath
-Set-IniFileValue -Path $configFilePath -Section "Default" -Key "image_name" -Value $image.ImageName
-Set-IniFileValue -Path $configFilePath -Section "Default" -Key "image_path" -Value $virtualDiskPath
-Set-IniFileValue -Path $configFilePath -Section "Default" -Key "virtual_disk_format" -Value "RAW"
-Set-IniFileValue -Path $configFilePath -Section "vm" -Key "disk_size" -Value (30GB)
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "image_name" -Value "Windows 10 Pro for Workstations"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "image_path" -Value "e:\images\win10.qcow2"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "image_type" -Value "KVM"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "disk_layout" -Value "UEFI"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "virtual_disk_format" -Value "QCOW2"
+Set-IniFileValue -Path $configFilePath -Section "vm" -Key "disk_size" -Value (10GB)
 Set-IniFileValue -Path $configFilePath -Section "drivers" -Key "virtio_iso_path" -Value $virtIOISOPath
 Set-IniFileValue -Path $configFilePath -Section "drivers" -Key "drivers_path" -Value $extraDriversPath
-Set-IniFileValue -Path $configFilePath -Section "updates" -Key "install_updates" -Value "True"
+#Set-IniFileValue -Path $configFilePath -Section "updates" -Key "install_updates" -Value "True"
 Set-IniFileValue -Path $configFilePath -Section "updates" -Key "purge_updates" -Value "True"
 Set-IniFileValue -Path $configFilePath -Section "sysprep" -Key "disable_swap" -Value "True"
+#Set-IniFileValue -Path $configFilePath -Section "custom" -Key "install_qemu_ga" -Value "True"
+# Set-IniFileValue -Path $configFilePath -Section "custom" -Key "install_cloudinit" -Value "True"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "compress_qcow2" -Value "True"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "enable_custom_wallpaper" -Value "False"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "shrink_image_to_minimum_size" -Value "True"
+Set-IniFileValue -Path $configFilePath -Section "Default" -Key "enable_active_mode" -Value "True"
+Set-IniFileValue -Path $configFilePath -Section "cloudbase_init" -Key "cloudbase_init_unattended_config_path" -Value "Examples\cloudbase-init-unattend.conf"
+Set-IniFileValue -Path $configFilePath -Section "cloudbase_init" -Key "cloudbase_init_config_path" -Value "Examples\cloudbase-init.conf"
+# Set-IniFileValue -Path $configFilePath -Section "sysprep" -Key "unattend_xml_path" -Value "Examples\unattend.xml"
+Set-IniFileValue -Path $configFilePath -Section "cloudbase_init" -Key "cloudbase_init_use_local_system" -Value "True"
+Set-IniFileValue -Path $configFilePath -Section "vm" -Key "cpu_count" -Value "4"
+Set-IniFileValue -Path $configFilePath -Section "vm" -Key "ram_size" -Value "4294967296"
+Set-IniFileValue -Path $configFilePath -Section "custom" -Key "time_zone" -Value "Asia/Jakarta"
 
 # This scripts generates a raw image file that, after being started as an instance and
 # after it shuts down, it can be used with Ironic or KVM hypervisor in OpenStack.

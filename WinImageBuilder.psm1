@@ -262,6 +262,7 @@ function Create-BCDBootConfig {
 
     Write-Log ("Create BCDBoot Config for {0}" -f @($image.ImageName))
     $bcdbootLocalPath = "bcdboot.exe"
+    Write-Log "BCDBoot local path: $bcdbootLocalPath Drive $windowsDrive System $systemDrive Disk $diskLayout"
     $bcdbootPath = "${windowsDrive}\windows\system32\bcdboot.exe"
     if (!(Test-Path $bcdbootPath)) {
         Write-Warning ('"{0}" not found, using online version' -f $bcdbootPath)
@@ -271,6 +272,7 @@ function Create-BCDBootConfig {
     $ErrorActionPreference = "SilentlyContinue"
     # Note: older versions of bcdboot.exe don't have a /f argument
     if ($image.ImageVersion.Major -eq 6 -and $image.ImageVersion.Minor -lt 2) {
+        Write-Log "Masuk sini drive $windowsDrive system $systemDrive disk $diskLayout SystemDrive $systemDrive"
        $bcdbootOutput = & $bcdbootPath ${windowsDrive}\windows /s ${systemDrive} /v
        # Note(avladu): Retry using the local bcdboot path
        # when generating Win7 images on Win10 / Server 2k16 hosts
